@@ -3,8 +3,7 @@ WORKDIR /app
 RUN corepack enable
 RUN apk add --no-cache python3 make g++
 COPY package.json pnpm-lock.yaml .npmrc ./
-RUN pnpm config set ignored-builds ""
-RUN pnpm install --frozen-lockfile
+RUN PNPM_IGNORED_BUILDS= pnpm install --frozen-lockfile
 
 FROM node:22-alpine AS builder
 WORKDIR /app
@@ -21,8 +20,7 @@ ENV PORT=8080
 RUN corepack enable
 RUN apk add --no-cache python3 make g++
 COPY package.json pnpm-lock.yaml .npmrc ./
-RUN pnpm config set ignored-builds ""
-RUN pnpm install --prod --frozen-lockfile
+RUN PNPM_IGNORED_BUILDS= pnpm install --prod --frozen-lockfile
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
