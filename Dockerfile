@@ -1,28 +1,52 @@
-FROM node:22-alpine AS deps
-WORKDIR /app
-RUN corepack enable
-RUN apk add --no-cache python3 make g++ vips-dev
-COPY package.json .npmrc pnpm-workspace.yaml ./
-RUN pnpm install --no-frozen-lockfile
+FROM node:22-alpine AS base
 
-FROM node:22-alpine AS builder
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
-RUN corepack enable
+
+# Install dependencies with pnpm
+RUN corepack enable pnpm
+COPY package.json ./
+RUN pnpm install --shamefully-hoist
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+RUN corepack enable pnpm
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Next.js collects completely anonymous telemetry data about general usage.
+# Uncomment the following line in case you want to disable telemetry during the build.
+ENV NEXT_TELEMETRY_DISABLED=1
+
 RUN pnpm build
 
-FROM node:22-alpine AS runner
+# Production image, copy all the files and run next
+FROM base AS runner
 WORKDIR /app
+
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
 ENV PORT=8080
-RUN corepack enable
-RUN apk add --no-cache vips
-COPY package.json .npmrc pnpm-workspace.yaml ./
-RUN pnpm install --prod --no-frozen-lockfile
-COPY --from=builder /app/.next ./.next
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.mjs ./next.config.mjs
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
 EXPOSE 8080
-CMD ["pnpm", "start", "-p", "8080"]
+
+CMD ["node", "server.js"]
