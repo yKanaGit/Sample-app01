@@ -70,8 +70,9 @@
     "typescript": "5.7.3"
   },
   "pnpm": {
-    "overrides": {
-      "sharp": "npm:noop2@^2.0.0"
+    "supportedArchitectures": {
+      "os": ["current"],
+      "cpu": ["current"]
     }
   }
 }

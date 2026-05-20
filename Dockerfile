@@ -7,8 +7,8 @@ WORKDIR /app
 
 # Install dependencies with pnpm
 RUN corepack enable pnpm
-COPY package.json ./
-RUN pnpm install --shamefully-hoist
+COPY package.json .npmrc ./
+RUN pnpm install
 
 # Rebuild the source code only when needed
 FROM base AS builder
