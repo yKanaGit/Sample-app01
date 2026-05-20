@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install dependencies with pnpm
 RUN corepack enable pnpm
-COPY package.json .npmrc ./
+COPY package.json .npmrc .pnpmfile.cjs ./
 RUN pnpm install
 
 # Rebuild the source code only when needed
