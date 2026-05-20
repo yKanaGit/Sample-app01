@@ -1,9 +1,8 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 RUN corepack enable
-RUN apk add --no-cache python3 make g++
 COPY package.json pnpm-lock.yaml .npmrc ./
-RUN PNPM_IGNORED_BUILDS= pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --no-optional
 
 FROM node:22-alpine AS builder
 WORKDIR /app
@@ -18,9 +17,8 @@ ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=8080
 RUN corepack enable
-RUN apk add --no-cache python3 make g++
 COPY package.json pnpm-lock.yaml .npmrc ./
-RUN PNPM_IGNORED_BUILDS= pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile --no-optional
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
