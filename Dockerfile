@@ -2,8 +2,8 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 RUN corepack enable
 RUN apk add --no-cache python3 make g++ vips-dev
-COPY package.json pnpm-lock.yaml .npmrc pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json .npmrc pnpm-workspace.yaml ./
+RUN pnpm install --no-frozen-lockfile
 
 FROM node:22-alpine AS builder
 WORKDIR /app
@@ -19,8 +19,8 @@ ENV HOSTNAME=0.0.0.0
 ENV PORT=8080
 RUN corepack enable
 RUN apk add --no-cache vips
-COPY package.json pnpm-lock.yaml .npmrc pnpm-workspace.yaml ./
-RUN pnpm install --prod --frozen-lockfile
+COPY package.json .npmrc pnpm-workspace.yaml ./
+RUN pnpm install --prod --no-frozen-lockfile
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
